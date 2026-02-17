@@ -2,7 +2,8 @@
 
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
-import Image from 'next/image';
+import { motion, AnimatePresence } from 'framer-motion';
+import { ZoomIn } from 'lucide-react';
 
 interface ProductGalleryProps {
     images: string[];
@@ -10,18 +11,42 @@ interface ProductGalleryProps {
 
 export function ProductGallery({ images }: ProductGalleryProps) {
     const [selectedImage, setSelectedImage] = useState(0);
+    const [isHovered, setIsHovered] = useState(false);
 
     return (
-        <div className="flex flex-col gap-4">
-            <div className="relative aspect-[4/3] w-full overflow-hidden rounded-xl border border-slate-100 bg-slate-50">
-                {/* In a real app, use Next.js Image component */}
-                <div
-                    className="absolute inset-0 bg-contain bg-center bg-no-repeat transition-all duration-300 ease-in-out"
-                    style={{ backgroundImage: `url(${images[selectedImage]})` }}
-                />
-                <div className="absolute top-4 right-4 bg-white/90 backdrop-blur px-3 py-1 rounded-full text-xs font-medium text-slate-800 shadow-sm">
-                    Zoom Enabled
-                </div>
+        <div className="flex flex-col gap-6">
+            <div
+                className="relative aspect-[16/10] w-full overflow-hidden rounded-2xl border border-slate-100 bg-slate-50 group cursor-zoom-in"
+                onMouseEnter={() => setIsHovered(true)}
+                onMouseLeave={() => setIsHovered(false)}
+            >
+                <AnimatePresence mode="wait">
+                    <motion.div
+                        key={selectedImage}
+                        initial={{ opacity: 0, scale: 1.05 }}
+                        animate={{
+                            opacity: 1,
+                            scale: isHovered ? 1.5 : 1,
+                            transition: { duration: 0.5 }
+                        }}
+                        exit={{ opacity: 0 }}
+                        transition={{ duration: 0.4 }}
+                        className="absolute inset-0 bg-contain bg-center bg-no-repeat"
+                        style={{
+                            backgroundImage: `url(${images[selectedImage]})`,
+                            backgroundPosition: isHovered ? 'center' : 'center' // Could add mouse tracking for advanced zoom
+                        }}
+                    />
+                </AnimatePresence>
+
+                {/* Zoom Hint */}
+                <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: isHovered ? 0 : 1 }}
+                    className="absolute top-4 right-4 bg-white/90 backdrop-blur px-3 py-1.5 rounded-full text-xs font-bold text-slate-900 shadow-sm flex items-center gap-1.5"
+                >
+                    <ZoomIn className="h-3 w-3" /> Hover to Zoom
+                </motion.div>
             </div>
 
             <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide">
@@ -29,17 +54,26 @@ export function ProductGallery({ images }: ProductGalleryProps) {
                     <button
                         key={index}
                         onClick={() => setSelectedImage(index)}
-                        className={cn(
-                            "relative h-20 w-20 flex-shrink-0 cursor-pointer overflow-hidden rounded-lg border-2 transition-all",
-                            selectedImage === index
-                                ? "border-blue-600 ring-2 ring-blue-600/20"
-                                : "border-slate-200 hover:border-slate-300"
-                        )}
+                        className="relative group outline-none"
                     >
-                        <div
-                            className="absolute inset-0 bg-cover bg-center"
-                            style={{ backgroundImage: `url(${image})` }}
-                        />
+                        <motion.div
+                            className={cn(
+                                "relative h-24 w-24 flex-shrink-0 overflow-hidden rounded-xl border-2 transition-all duration-300",
+                                selectedImage === index
+                                    ? "border-blue-600 ring-2 ring-blue-600/20"
+                                    : "border-slate-200 group-hover:border-slate-300"
+                            )}
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                        >
+                            <div
+                                className="absolute inset-0 bg-cover bg-center"
+                                style={{ backgroundImage: `url(${image})` }}
+                            />
+                            {selectedImage !== index && (
+                                <div className="absolute inset-0 bg-white/20 group-hover:bg-transparent transition-colors" />
+                            )}
+                        </motion.div>
                     </button>
                 ))}
             </div>
